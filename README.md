@@ -2,10 +2,10 @@
 
 Welcome to the Project Accelerator Template! This comprehensive template acts as a starting point and accelerator for your AI and Machine Learning projects, whether in an enterprise or academic setting. With best practices baked in, it ensures a smooth development process from the get-go.
 
-## 🌟 Goal
+##  🌟 Goal
 The main goal of this template is to offer a structured foundation for developing high-quality AI/ML projects with ease. It serves as a guideline for both beginners and experienced practitioners to establish, deploy, and maintain robust AI/ML solutions efficiently.
 
-## 💼 Contributing: Your Guide to Enterprise-Level Development & Collaboration!
+##  💼 Contributing: Your Guide to Enterprise-Level Development & Collaboration!
 
 Interested in making impactful contributions? Our **[CONTRIBUTING](./CONTRIBUTING.md)** guide is your go-to resource! It offers a roadmap to navigate through:
 
@@ -42,6 +42,6 @@ Interested in making impactful contributions? Our **[CONTRIBUTING](./CONTRIBUTIN
 ┣ 📜 requirements.txt <- General project dependencies.
 ```
 
-## System Design and Architecture 👨🏽‍💻
+##  👨🏽‍💻 System Design and Architecture
 
 ## CI/CD 
