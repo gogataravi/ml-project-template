@@ -17,6 +17,9 @@ Interested in making impactful contributions? Our **[CONTRIBUTING](./CONTRIBUTIN
 
 - **🔢 Version & Branching**: Decode our version numbering protocol and get a visual walkthrough of the project’s branching strategy, facilitating smooth transitions between development, staging, and production environments
 
+- For latest developments and documentation of all noteworthy changes made to the this project. please refer to [CHANGELOG.md](CHANGELOG.md)
+
+
 ## 🌲 Project Tree Structure
 
 ```
