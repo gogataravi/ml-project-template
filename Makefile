@@ -4,8 +4,8 @@ export PYTHONPATH=$(PWD):$PYTHONPATH;
 
 # Target for setting up pre-commit and pre-push hooks
 set_up_precommit_and_prepush:
-	@conda activate $(CONDA_ENV) && pre-commit install -t pre-commit
-	@conda activate $(CONDA_ENV) && pre-commit install -t pre-push
+	pre-commit install -t pre-commit
+	pre-commit install -t pre-push
 
 # The 'check_code_quality' command runs a series of checks to ensure the quality of your code.
 check_code_quality:
