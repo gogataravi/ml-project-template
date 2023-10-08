@@ -53,6 +53,16 @@ Through these guidelines, team members can collaboratively build a robust, user-
         - -r file:requirements-pipelines.txt
     ```
 
+    Second, take the following steps with regard to the requirement files:
+
+    + `requirements.txt`: This file should list all packages that are essential for executing your code located in the src directory. Please meticulously check and make sure every package that your code depends on is listed with the appropriate version number.
+
+    + `requirements-codequality.txt` : Populate this file with packages necessary for conducting code quality checks and supporting continuous integration and continuous delivery (CI/CD) execution. These packages are not directly involved in running your main code but are crucial for maintaining code quality and facilitating the CI/CD process. Ensure to include packages that help in linting, formatting, and any other code quality assurance processes that you utilize.
+
+    + `requirements-pipelines.txt` : This file is pivotal for orchestration purposes. It should contain packages that are essential for automating the execution of your code in a pipeline format. In other words, any package that supports the automated, sequential execution of your code from development to deployment should be listed in this file.
+
+    > Additionally, during the development phase, as you integrate new packages into your project, it's imperative to promptly add these to the respective requirement files.
+
     After saving the `environment.yaml` file, create your Conda environment based on the YAML file:
 
     ```bash
@@ -65,7 +75,7 @@ Through these guidelines, team members can collaboratively build a robust, user-
 ### Optional Steps
 
 - **Integrate with VSCode (Optional)**:
-    - Install the Python extension and Jupyter keymap for Visual Studio Code.
+    - Install the `Python` and `Jupyter keymap` extensions for Visual Studio Code.
     - Ensure you have `ipykernel` installed and activated within the `your_environment` environment:
         ```bash
         conda activate your_environment
