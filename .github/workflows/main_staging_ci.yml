@@ -1,4 +1,5 @@
-name: Code Quality and Tests
+name: Code Quality and Tests 🚀
+
 on:
   push:
     branches:
@@ -19,38 +20,33 @@ jobs:
           environment-file: environment.yaml  # Create an environment.yml file
           activate-environment: my-template-environment
           auto-activate-base: false
-      - run: |
-          conda info
+        run: |
           conda list
+          conda install -c anaconda click
+          conda activate my-template-environment
 
       - name: Setup Node 🔧
         uses: actions/setup-node@v2
         with:
           node-version: '14'
 
-      - name: Install click using Conda
-        run: |
-          conda list
-          conda install -c anaconda click
-          pip install -r requirements-codequality.txt
-
-      - name: Run isort
+      - name: Run isort 🧹
         run: isort --check-only --profile black .
 
-      - name: Run Black
+      - name: Run Black 🌚
         run: black --check .
 
-      - name: Run flake8
-        run: flake8 . --exclude setup.py
+      - name: Run flake8 ✅
+        run: flake8 . --max-line-length=124
 
-      - name: Run ruff
+      - name: Run ruff 🧼
         run: ruff --fix --exit-non-zero-on-fix .
 
-      - name: Run interrogate
+      - name: Run interrogate 🔍
         run: interrogate src -v -i --fail-under=60 -e '**/__init__.py'
 
-      - name: Bandit Security Linter
+      - name: Bandit Security Linter 🔒
         run: bandit -c pyproject.toml -r .
 
-      - name: Run Pytest
+      - name: Run Pytest 🧪
         run: pytest tests/
