@@ -14,7 +14,7 @@ repos:
           - "--config"
           - "pyproject.toml"
           - "--max-line-length=124"  # Adjust the line length as needed
-          
+
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: 'v0.910'  # Use the ref you want to point at
     hooks:
@@ -44,11 +44,19 @@ repos:
     rev: 1.5.0
     hooks:
       - id: interrogate
-        args: [pipelines, -v, -i, --fail-under=60, '-e', '**/__init__.py']
+        args: [src, -v, -i, --fail-under=70, '-e', '**/__init__.py']
         pass_filenames: false
 
   - repo: https://github.com/PyCQA/bandit
-    rev: 1.7.4
+    rev: '1.7.5'
     hooks:
-      - id: bandit
-        args: ["-x", "tests/", ""]
+    - id: bandit
+      args: ['-q', '-c', 'pyproject.toml']
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+    - id: check-yaml
+    - id: debug-statements
+    - id: end-of-file-fixer
+    - id: trailing-whitespace

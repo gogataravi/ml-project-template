@@ -11,7 +11,7 @@ A well-structured prompt is essential for effective interaction with Language Le
 + **Intent/Goal**: "Seeking a planting guide for starting a home vegetable garden"
 - **Response Format**: "Information should be presented as a concise infographic or bulleted list"
 
-**Resulting Prompt**: 
+**Resulting Prompt**:
 "I’m a novice gardener interested in growing organic vegetables in a small backyard. Could you suggest a planting guide for starting a home vegetable garden? Please present the information as a concise infographic or a bulleted list."
 
 ## Development Practices for Our Code
@@ -50,14 +50,14 @@ def fetch_and_process_data(
 
 ### Intent/Goal
 
-We aim to write high-performance code without compromising on quality. Our code is designed to be efficient, scalable, and consume minimal memory, thereby speeding up processes and delivering optimal results. Can you become my software engineer assistant following the mentioned practices ? 
+We aim to write high-performance code without compromising on quality. Our code is designed to be efficient, scalable, and consume minimal memory, thereby speeding up processes and delivering optimal results. Can you become my software engineer assistant following the mentioned practices ?
 
 ### Response Format
 
-Additionally, each function we draft is accompanied by a unit test, developed using the pytest framework, ensuring adherence to the best practices outlined above. Moreover, python code doens't need to ve over commented if not specified. Take your time on your responses and let's write some code. 
+Additionally, each function we draft is accompanied by a unit test, developed using the pytest framework, ensuring adherence to the best practices outlined above. Moreover, python code doens't need to ve over commented if not specified. Take your time on your responses and let's write some code.
 
 
-## **Resulting Prompt**: 
+## **Resulting Prompt**:
 
 I'm a software developer working on a Python project within a large enterprise setup that is focused on AI/ML engineering. Our development practices adhere to the highest standards in the industry. These include compliance with the PEP8 style guide, utilization of automated linters for ensuring code quality, maintainability, and readability. Every function within our codebase is required to have Typing, logging (no prints allowed), error handling with try catch method and a DocString, with the latter adhering to a specific format as outlined below:
 
@@ -87,6 +87,6 @@ def fetch_and_process_data(
         """
 ```
 
-We aim to write high-performance code without compromising on quality. Our code is designed to be efficient, scalable, and consume minimal memory, thereby speeding up processes and delivering optimal results. Can you become my software engineer assistant following the mentioned practices ? 
+We aim to write high-performance code without compromising on quality. Our code is designed to be efficient, scalable, and consume minimal memory, thereby speeding up processes and delivering optimal results. Can you become my software engineer assistant following the mentioned practices ?
 
-Additionally, each function we draft is accompanied by a unit test, developed using the pytest framework, ensuring adherence to the best practices outlined above. Moreover, python code doens't need to ve over commented if not specified. Take your time on your responses and let's write some code. 
+Additionally, each function we draft is accompanied by a unit test, developed using the pytest framework, ensuring adherence to the best practices outlined above. Moreover, python code doens't need to ve over commented if not specified. Take your time on your responses and let's write some code.

@@ -37,16 +37,17 @@ author-email = "john.doe@example.com"
 example-script = "example_project:main"
 
 [tool.bandit]
-targets = ["example_project/"]
-exclude = ["tests/"]
+exclude_dirs = ["tests/"]
+tests = ["B201", "B301"]
+skips = ["B101", "B601"]
 
 [tool.black]
 line-length = 88
 
 [tool.mypy]
-ignore_missing_imports = "True"
-files = "pipelines/"
-exclude = "^pipelines/scripts_featureengineering/src/featuresets|tests"
+ignore_missing_imports = true
+files = "src/"
+exclude = "utils|tests"
 
 [tool.ruff]
 line-length = 124
@@ -54,3 +55,9 @@ line-length = 124
 [tool.flake8]
 max-line-length = 124
 
+[tool.pytest]
+addopts = "-vv --cov=. --cov-report xml:/tmp/coverage.xml --cov-report html:/tmp/coverage_html --cov-report term-missing"
+log_cli = true
+norecursedirs = ".git __pycache__ docs"
+log_format = "%(asctime)s - %(levelname)-8s %(message)s (%(filename)s:%(funcName)s:%(lineno)d)"
+log_level = "info"

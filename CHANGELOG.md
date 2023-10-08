@@ -10,4 +10,3 @@ This file meticulously documents all noteworthy changes made to the this project
 
 ### Added
 - **Initial Project Structure**: Set up the foundational structure for this project. This structure is essential for organizing the project's files and directories in a way that is comprehensible and accessible to contributors and users. Newcomers to the project can read [this guide on project structure](https://example-link-to-your-project-structure-guide) to better navigate and understand the established framework.
-

@@ -10,7 +10,7 @@ The main goal of this template is to offer a structured foundation for developin
 Interested in making impactful contributions? Our **[CONTRIBUTING](./CONTRIBUTING.md)** guide is your go-to resource! It offers a roadmap to navigate through:
 
 - **🔄 Development Workflow**: Acquaint yourself with our streamlined workflow designed for both effective collaboration and a product-centric approach.
-  
+
 - **🚀 Development Process**: Delve into the nitty-gritty from raising issues to crafting pull requests, all while adhering to best practices for feature development and bug fixing.
 
 - **🔍 Testing & QA**: Uncover the essence of early testing and explore swift development & testing techniques with Jupyter Notebooks and `%%ipytest`.
@@ -44,4 +44,4 @@ Interested in making impactful contributions? Our **[CONTRIBUTING](./CONTRIBUTIN
 
 ##  👨🏽‍💻 System Design and Architecture
 
-## CI/CD 
+## CI/CD

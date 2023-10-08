@@ -7,7 +7,7 @@ from imblearn.under_sampling import RandomUnderSampler
 from sklearn import preprocessing
 from sklearn.model_selection import train_test_split
 
-from utils.logging_ml import get_logger, log_function_call
+from utils.ml_logging import get_logger, log_function_call
 
 # Set up logging
 logger = get_logger()

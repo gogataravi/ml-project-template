@@ -17,11 +17,11 @@
 Adhering to the outlined development steps is essential for fostering effective collaboration, ensuring engineering excellence, and maintaining a product-focused mindset within the team:
 
 - **Clear Communication**: These clear, structured steps minimize misunderstandings, promoting a collaborative environment.
-  
+
 - **Code Quality**: By following prescribed tests, documentation, and hooks, we ensure our code is clean, maintainable, and consistent.
-  
+
 - **Product Focus**: A disciplined workflow helps the team concentrate on delivering valuable features and addressing crucial issues, enhancing the end product.
-  
+
 - **Efficient Collaboration**: With streamlined branching and merging, team members can seamlessly integrate their contributions without disrupting others’ work.
 
 Through these guidelines, team members can collaboratively build a robust, user-centered software product while upholding high technical and product standards.
@@ -31,7 +31,7 @@ Through these guidelines, team members can collaboratively build a robust, user-
 
 1. **Initiate a New Issue**: Begin by opening a new issue—whether it's a bug or a feature—on the repository's issue tracker or on Jira.
 
-2. **Clone the Repository**: 
+2. **Clone the Repository**:
     ```shell
     git clone https://github.example.com/{your_project}.git
     ```
@@ -69,7 +69,7 @@ Through these guidelines, team members can collaboratively build a robust, user-
     conda env create -f environment.yaml
     conda activate my-template-environment
     ```
-   
+
    This process initializes your development environment with the specified Python version and installs the necessary packages listed in the respective requirements files.
 
 ### Optional Steps
@@ -84,7 +84,7 @@ Through these guidelines, team members can collaboratively build a robust, user-
     - You should be able to see the environment listed as a kernel option within VSCode.
 
 5. **Setup Hooks for Code Quality Assurance**:
-    
+
     ```bash
     make set_up_precommit_and_prepush CONDA_ENV=my-template-environment
     ```
@@ -116,7 +116,7 @@ Through these guidelines, team members can collaboratively build a robust, user-
 ### Pull Requests
 
 - Open a PR targeting either `staging` or `main`. Fill in the PR template with clear and detailed instructions.
-- Upon submission, a github CI/CD pipeline will trigger automatically. 
+- Upon submission, a github CI/CD pipeline will trigger automatically.
 
 ### Issues
 
@@ -132,7 +132,7 @@ Through these guidelines, team members can collaboratively build a robust, user-
 
 ![Branching Strategy Diagram](utils/images/flow.png)
 
-**Explanation**: 
+**Explanation**:
 - `feature/new_feature branch` is for development.
 - `staging branch` is for the staging environment, where code is further tested and validated.
 - `main branch` is the production environment with the

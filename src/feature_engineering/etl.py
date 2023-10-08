@@ -1,6 +1,6 @@
 import pandas as pd
 
-from utils.logging_ml import get_logger, log_function_call
+from utils.ml_logging import get_logger, log_function_call
 
 # Set up logging
 logger = get_logger()
@@ -31,8 +31,8 @@ def load_data(file_path: str) -> pd.DataFrame:
         raise
 
 
-@log_function_call("etl")
-def validate_missing_data(df: pd.DataFrame, threshold: float):
+@log_function_call("etl", log_output=True)
+def validate_missing_data(df: pd.DataFrame, threshold: float) -> pd.DataFrame:
     """
     Validate if any column in the DataFrame has missing values more than the specified threshold.
 
@@ -45,7 +45,6 @@ def validate_missing_data(df: pd.DataFrame, threshold: float):
         {"column_name": df.columns, "percent_missing": percent_missing}
     )
 
-    logger.info(missing_value_df[["column_name", "percent_missing"]])
     if any(percent_missing > threshold):
         error_columns = percent_missing[percent_missing > threshold].index.tolist()
         logger.error(
@@ -54,3 +53,5 @@ def validate_missing_data(df: pd.DataFrame, threshold: float):
         raise ValueError(
             f"Columns {error_columns} have more than {threshold}% missing values."
         )
+
+    return missing_value_df

@@ -4,7 +4,7 @@ import pandas as pd
 import seaborn as sns
 from sklearn import metrics
 
-from utils.logging_ml import get_logger
+from utils.ml_logging import get_logger
 
 # Set up logging
 logger = get_logger()
