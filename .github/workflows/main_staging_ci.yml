@@ -25,7 +25,9 @@ jobs:
         run: |
           conda list
           conda install -c anaconda click
-          conda activate my-template-environment
+          pip install -r requirements-pipelines.txt
+          pip install -r requirements-codequality.txt
+          pip install -r requirements.txt
 
       - name: Setup Node 🔧
         uses: actions/setup-node@v2
