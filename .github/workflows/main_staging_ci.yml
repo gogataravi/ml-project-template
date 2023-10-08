@@ -20,6 +20,8 @@ jobs:
           environment-file: environment.yaml  # Create an environment.yml file
           activate-environment: my-template-environment
           auto-activate-base: false
+
+      - name: Activate Conda Node 🔧
         run: |
           conda list
           conda install -c anaconda click
