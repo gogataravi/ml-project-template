@@ -43,3 +43,14 @@ exclude = ["tests/"]
 [tool.black]
 line-length = 88
 
+[tool.mypy]
+ignore_missing_imports = "True"
+files = "pipelines/"
+exclude = "^pipelines/scripts_featureengineering/src/featuresets|tests"
+
+[tool.ruff]
+line-length = 124
+
+[tool.flake8]
+max-line-length = 124
+

@@ -1,15 +1,17 @@
-import pandas as pd
-import numpy as np
 from typing import Tuple
-from sklearn.model_selection import train_test_split
-from sklearn import preprocessing
+
+import numpy as np
+import pandas as pd
 from imblearn.over_sampling import SMOTE
 from imblearn.under_sampling import RandomUnderSampler
-from utils.logging import log_function_call
-from utils.logging import get_logger
+from sklearn import preprocessing
+from sklearn.model_selection import train_test_split
+
+from utils.logging_ml import get_logger, log_function_call
 
 # Set up logging
 logger = get_logger()
+
 
 @log_function_call("Feature Engineering")
 def log_transform_features(df: pd.DataFrame, features: list) -> pd.DataFrame:
@@ -23,6 +25,7 @@ def log_transform_features(df: pd.DataFrame, features: list) -> pd.DataFrame:
     for feature in features:
         df[feature] = df[feature].apply(lambda x: np.log(x + 1))
     return df
+
 
 @log_function_call("Feature Engineering")
 def encode_categorical_features(df: pd.DataFrame, features: list) -> pd.DataFrame:
@@ -38,6 +41,7 @@ def encode_categorical_features(df: pd.DataFrame, features: list) -> pd.DataFram
         df[feature] = labelencoder.fit_transform(df[feature])
     return df
 
+
 @log_function_call("Feature Engineering")
 def apply_one_hot_encoding(df: pd.DataFrame, columns: list) -> pd.DataFrame:
     """
@@ -48,6 +52,7 @@ def apply_one_hot_encoding(df: pd.DataFrame, columns: list) -> pd.DataFrame:
     :return: DataFrame with one-hot encoded columns.
     """
     return pd.get_dummies(df, columns=columns)
+
 
 @log_function_call("Feature Engineering")
 def replace_values(df: pd.DataFrame, replace_structure: dict) -> pd.DataFrame:
@@ -61,7 +66,9 @@ def replace_values(df: pd.DataFrame, replace_structure: dict) -> pd.DataFrame:
     return df.replace(replace_structure)
 
 
-def split_data(df: pd.DataFrame, target_column: str, test_size: float, random_state: int) -> tuple:
+def split_data(
+    df: pd.DataFrame, target_column: str, test_size: float, random_state: int
+) -> tuple:
     """
     Split data into training and testing sets and separate target variable.
 
@@ -73,11 +80,19 @@ def split_data(df: pd.DataFrame, target_column: str, test_size: float, random_st
     """
     X = df.drop(target_column, axis=1)
     y = df.pop(target_column)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=random_state, stratify=y)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=test_size, random_state=random_state, stratify=y
+    )
     return X_train, X_test, y_train, y_test
 
 
-def perform_upsampling(X_train: pd.DataFrame, y_train: pd.Series, strategy: float = 1, k_neighbors: int = 5, random_state: int = 1) -> Tuple[pd.DataFrame, pd.Series]:
+def perform_upsampling(
+    X_train: pd.DataFrame,
+    y_train: pd.Series,
+    strategy: float = 1,
+    k_neighbors: int = 5,
+    random_state: int = 1,
+) -> Tuple[pd.DataFrame, pd.Series]:
     """
     Perform upsampling on the dataset to balance it.
 
@@ -95,7 +110,9 @@ def perform_upsampling(X_train: pd.DataFrame, y_train: pd.Series, strategy: floa
     logger.info(f"Before Upsampling, counts of label '1': {sum(y_train==1)}")
     logger.info(f"Before Upsampling, counts of label '0': {sum(y_train==0)}")
 
-    sm = SMOTE(sampling_strategy=strategy, k_neighbors=k_neighbors, random_state=random_state)
+    sm = SMOTE(
+        sampling_strategy=strategy, k_neighbors=k_neighbors, random_state=random_state
+    )
     X_train_res, y_train_res = sm.fit_resample(X_train, y_train.ravel())
 
     logger.info(f"After Upsampling, counts of label '1': {sum(y_train_res==1)}")
@@ -104,7 +121,9 @@ def perform_upsampling(X_train: pd.DataFrame, y_train: pd.Series, strategy: floa
     return X_train_res, y_train_res
 
 
-def perform_downsampling(X_train: pd.DataFrame, y_train: pd.Series) -> Tuple[pd.DataFrame, pd.Series]:
+def perform_downsampling(
+    X_train: pd.DataFrame, y_train: pd.Series
+) -> Tuple[pd.DataFrame, pd.Series]:
     """
     Perform downsampling on the dataset to balance it.
 

@@ -1,25 +1,28 @@
-import logging
-from typing import Optional
 import functools
+import logging
 import time
+from typing import Optional
 
 # Define a new logging level named "KEYINFO" with a level of 25
 KEYINFO_LEVEL_NUM = 25
 logging.addLevelName(KEYINFO_LEVEL_NUM, "KEYINFO")
 
-def keyinfo(self, message, *args, **kws):
+
+def keyinfo(self: logging.Logger, message, *args, **kws):
     """
     Log 'msg % args' with severity 'KEYINFO'.
     """
     if self.isEnabledFor(KEYINFO_LEVEL_NUM):
         self._log(KEYINFO_LEVEL_NUM, message, args, **kws)
 
+
 logging.Logger.keyinfo = keyinfo
+
 
 class CustomFormatter(logging.Formatter):
     """
     CustomFormatter overrides 'funcName' and 'filename' attributes in the log record.
-    
+
     When a decorator is used to log function calls in a different file, this formatter helps
     preserve the correct file and function name in the log records.
 
@@ -32,10 +35,11 @@ class CustomFormatter(logging.Formatter):
         record.filename = getattr(record, "file_name_override", record.filename)
         return super().format(record)
 
+
 def get_logger(
     name: str = "micro",
     level: Optional[int] = None,
-    include_stream_handler: bool = True
+    include_stream_handler: bool = True,
 ) -> logging.Logger:
     """
     Returns a configured logger with a custom name, level, and formatter.
@@ -58,12 +62,15 @@ def get_logger(
     if level is not None or logger.level == 0:
         logger.setLevel(level or logging.INFO)
 
-    if include_stream_handler and not any(isinstance(h, logging.StreamHandler) for h in logger.handlers):
+    if include_stream_handler and not any(
+        isinstance(h, logging.StreamHandler) for h in logger.handlers
+    ):
         sh = logging.StreamHandler()
         sh.setFormatter(formatter)
         logger.addHandler(sh)
 
     return logger
+
 
 def log_function_call(logger_name: str):
     """
@@ -82,7 +89,9 @@ def log_function_call(logger_name: str):
         def wrapper_log_function_call(*args, **kwargs):
             args_str = ", ".join(map(str, args))
             kwargs_str = ", ".join(f"{k}={v}" for k, v in kwargs.items())
-            logger.info(f"Function {func.__name__} called with arguments: {args_str} and keyword arguments: {kwargs_str}")
+            logger.info(
+                f"Function {func.__name__} called with arguments: {args_str} and keyword arguments: {kwargs_str}"
+            )
 
             start_time = time.time()
             result = func(*args, **kwargs)
