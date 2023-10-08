@@ -1,4 +1,9 @@
 name: Code Quality and Tests
+on:
+  push:
+    branches:
+      - main
+      - staging
 
 jobs:
   quality-checks:
