@@ -23,7 +23,7 @@ def load_data(file_path: str) -> pd.DataFrame:
         df = df.drop(columns=["CLIENTNUM"])
 
         # Validate missing data
-        validate_missing_data(df, threshold=20.0)
+        _validate_missing_data(df, threshold=20.0)
 
         return df
     except FileNotFoundError:
@@ -32,7 +32,7 @@ def load_data(file_path: str) -> pd.DataFrame:
 
 
 @log_function_call("etl", log_output=True)
-def validate_missing_data(df: pd.DataFrame, threshold: float) -> pd.DataFrame:
+def _validate_missing_data(df: pd.DataFrame, threshold: float) -> pd.DataFrame:
     """
     Validate if any column in the DataFrame has missing values more than the specified threshold.
 

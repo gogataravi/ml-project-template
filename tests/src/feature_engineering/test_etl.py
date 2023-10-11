@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.feature_engineering.etl import load_data, validate_missing_data
+from src.feature_engineering.etl import _validate_missing_data, load_data
 
 # Sample data for testing
 valid_test_data = {
@@ -51,4 +51,4 @@ def test_validate_missing_data():
     with pytest.raises(
         ValueError, match=r"Columns \['A'\] have more than 20.0% missing values."
     ):
-        validate_missing_data(invalid_test_df, threshold=20.0)
+        _validate_missing_data(invalid_test_df, threshold=20.0)

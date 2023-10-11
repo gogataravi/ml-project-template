@@ -36,8 +36,8 @@ check_code_quality:
 	# Running 'interrogate' to check docstring coverage in your Python code.
 	@pre-commit run interrogate --all-files
 
-	Running 'bandit' to identify common security issues in your Python code.
-	@pre-commit run bandit --all-files -v
+	# Running 'bandit' to identify common security issues in your Python code.
+	bandit -c pyproject.toml -r .
 
 fix_code_quality:
 	# Automatic fixes for code quality
@@ -51,3 +51,18 @@ run_unit_tests:
 
 check_and_fix_code_quality: fix_code_quality check_code_quality
 check_and_fix_test_quality: run_unit_tests
+
+
+# Targets for various operations and tests
+
+INPUT_PATH= "/Users/salv91/Desktop/open-source/ml-project-template/utils/data/BankChurners.csv"
+OUTPUT_DIRECTORY= "/Users/salv91/Desktop/open-source/ml-project-template/notebooks/dev/test"
+
+test_fe:
+	@echo "Running ETL Test"
+	$(PYTHON_INTERPRETER) $(PWD)/pipelines/feature_engineering/components.py run-feature-engineering -i $(INPUT_PATH) -o $(OUTPUT_DIRECTORY)
+
+
+run_pylint:
+	@echo "Running linter"
+	find . -type f -name "*.py" ! -path "./tests/*" | xargs pylint -disable=logging-fstring-interpolation > utils/pylint_report/pylint_report.txt

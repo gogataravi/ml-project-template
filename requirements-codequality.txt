@@ -7,3 +7,4 @@ ruff
 bandit
 pylint
 pytest
+pytest-cov

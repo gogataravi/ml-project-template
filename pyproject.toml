@@ -52,6 +52,9 @@ exclude = "utils|tests"
 [tool.ruff]
 line-length = 124
 
+[tool.isort]
+profile = "black"
+
 [tool.flake8]
 max-line-length = 124
 

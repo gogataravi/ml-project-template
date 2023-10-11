@@ -62,9 +62,7 @@ def get_logger(
     if level is not None or logger.level == 0:
         logger.setLevel(level or logging.INFO)  # type: ignore
 
-    if include_stream_handler and not any(
-        isinstance(h, logging.StreamHandler) for h in logger.handlers  # type: ignore
-    ):
+    if include_stream_handler and not any(isinstance(h, logging.StreamHandler) for h in logger.handlers):  # type: ignore
         sh = logging.StreamHandler()  # type: ignore
         sh.setFormatter(formatter)
         logger.addHandler(sh)
