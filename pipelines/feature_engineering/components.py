@@ -10,9 +10,8 @@ from src.feature_engineering.model_specific_transformations import (
     encode_categorical_features,
     log_transform_features,
     replace_values,
-    save_datasets,
-    split_data,
 )
+from src.utils import save_dataframe
 from utils.ml_logging import get_logger
 
 # Set up logging
@@ -38,7 +37,7 @@ def cli(ctx) -> None:
 )
 @click.option(
     "-o",
-    "--output_directory",
+    "--output_path",
     type=str,
     default=None,
     help="Directory to save datasets",
@@ -47,7 +46,7 @@ def cli(ctx) -> None:
 def run_feature_engineering(
     ctx: click.Context,
     input_path: Optional[str],
-    output_directory: Optional[str],
+    output_path: Optional[str],
     date: Optional[str],
 ) -> None:
     """
@@ -56,15 +55,15 @@ def run_feature_engineering(
     cfg = ctx.obj.cfg
 
     # Validate and/or set default values from the configuration
-    input_path = input_path or cfg.pipeline_settings.input_path
+    input_path = input_path or cfg.fe_pipeline_settings.input_path
     if not input_path:
         logger.error(
             "Input path is neither provided as an argument nor found in the configuration."
         )
         return
 
-    output_directory = output_directory or cfg.pipeline_settings.output_directory
-    if not output_directory:
+    output_path = output_path or cfg.fe_pipeline_settings.output_path
+    if not output_path:
         logger.error(
             "Output directory is neither provided as an argument nor found in the configuration."
         )
@@ -118,18 +117,14 @@ def run_feature_engineering(
     }
     df = replace_values(df, replace_struct)
 
-    # Split data and save datasets
-    X_train, X_test, y_train, y_test = split_data(
-        df, target_column="Attrition_Flag", test_size=0.30, random_state=1
-    )
-    save_datasets(X_train, X_test, y_train, y_test, output_directory, date)
+    save_dataframe(df, path=output_path)
 
 
 @click.option("--config", type=str, default=None, help="Path to the configuration file")
 def main(config: Optional[str] = None) -> None:
     """Entry point of the script."""
     if not config:
-        config = "pipelines/configs/feature_engineering/fe.yaml"
+        config = "pipelines/configs/churn_prediction/main.yaml"
     if not os.path.exists(config):
         raise ValueError(f"Configuration file not found at {config}")
 

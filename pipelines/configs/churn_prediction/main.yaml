@@ -1,0 +1,13 @@
+pipeline_settings:
+  date: "14_10_2023"
+
+fe_pipeline_settings:
+  input_path: "/Users/salv91/Desktop/open-source/ml-project-template/utils/data/BankChurners.csv"
+  output_path: "/Users/salv91/Desktop/open-source/ml-project-template/pipelines/registries/feature_store/${pipeline_settings.date}/feature_dataset.csv"
+
+training_pipeline_settings:
+  features_path: "/Users/salv91/Desktop/open-source/ml-project-template/pipelines/registries/feature_store/${pipeline_settings.date}/feature_dataset.csv"
+  output_directory: "/Users/salv91/Desktop/open-source/ml-project-template/pipelines/registries/feature_store/${pipeline_settings.date}/training/"
+  target_column: "Attrition_Flag"
+
+  hyper_parameter_optimization: ${hyper_parameter_file}

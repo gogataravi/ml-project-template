@@ -1,5 +1,3 @@
-from unittest.mock import MagicMock, Mock, patch
-
 import numpy as np
 import pandas as pd
 
@@ -7,9 +5,7 @@ from src.feature_engineering.model_specific_transformations import (
     apply_one_hot_encoding,
     encode_categorical_features,
     log_transform_features,
-    perform_upsampling,
     replace_values,
-    split_data,
 )
 
 
@@ -138,61 +134,3 @@ def test_replace_values():
 
     # Assert
     pd.testing.assert_frame_equal(result_df, expected_output_df, check_dtype=False)
-
-
-def test_split_data():
-    # Arrange
-    test_data = {
-        "Attrition_Flag": [0, 1, 0, 1, 0],
-        "Feature_1": [1, 2, 3, 4, 5],
-        "Feature_2": [5, 4, 3, 2, 1],
-    }
-    test_df = pd.DataFrame(test_data)
-    target_column = "Attrition_Flag"
-    test_size = 0.4
-    random_state = 1
-
-    # Act
-    X_train, X_test, y_train, y_test = split_data(
-        test_df.copy(), target_column, test_size, random_state
-    )
-
-    # Assert
-    assert len(X_train) == 3  # 60% of data for training
-    assert len(X_test) == 2  # 40% of data for testing
-    assert set(y_train) == {0, 1}  # Both classes present in y_train
-    assert set(y_test) == {0, 1}  # Both classes present in y_test
-
-
-# Sample test data
-X_train = pd.DataFrame(np.random.rand(10, 5), columns=list("ABCDE"))
-y_train = pd.Series(np.random.choice([0, 1], size=(10,)))
-
-# Mock objects for the tests
-mock_smote_instance = Mock()
-mock_smote_instance.fit_resample = MagicMock(return_value=(X_train, y_train))
-
-mock_rus_instance = Mock()
-mock_rus_instance.fit_resample = MagicMock(return_value=(X_train, y_train))
-
-
-@patch(
-    "src.feature_engineering.model_specific_transformations.SMOTE",
-    return_value=mock_smote_instance,
-)
-def test_perform_upsampling(mock_smote_class):
-    # Call the function
-    X_res, y_res = perform_upsampling(X_train, y_train)
-
-    # Assert that SMOTE was instantiated
-    mock_smote_class.assert_called_once_with(
-        sampling_strategy=1, k_neighbors=5, random_state=1
-    )
-
-    # If fit_resample expected to return arrays, use proper assertion for arrays
-    np.testing.assert_array_equal(
-        mock_smote_instance.fit_resample.call_args[0][0], X_train.to_numpy()
-    )
-    np.testing.assert_array_equal(
-        mock_smote_instance.fit_resample.call_args[0][1], y_train.to_numpy()
-    )

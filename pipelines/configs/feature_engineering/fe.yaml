@@ -1,5 +1,0 @@
-
-pipeline_settings:
-  input_path: "/Users/salv91/Desktop/open-source/ml-project-template/utils/data/BankChurners.csv"
-  output_directory: "/Users/salv91/Desktop/open-source/ml-project-template/notebooks/dev/test/new/"
-  date:

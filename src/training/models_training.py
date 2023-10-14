@@ -1,14 +1,16 @@
-import pickle
 from typing import Any, List, Literal, Optional, Tuple, Union
 
 import numpy as np
-from sklearn import decomposition, metrics
+import pandas as pd
+from imblearn.over_sampling import SMOTE
+from imblearn.under_sampling import RandomUnderSampler
+from sklearn import metrics
 from sklearn.base import ClassifierMixin
 from sklearn.ensemble import AdaBoostClassifier, BaggingClassifier, StackingClassifier
-from sklearn.model_selection import RandomizedSearchCV
-from sklearn.pipeline import Pipeline
+from sklearn.model_selection import train_test_split
 
-from utils.ml_logging import get_logger
+from src.utils import load_dataframe_from_path
+from utils.ml_logging import get_logger, log_function_call
 
 # Set up logging
 logger = get_logger()
@@ -19,73 +21,86 @@ class ModelTrainer:
     Class for training ensemble classifiers using randomized search.
 
     Parameters:
-        X_train (array-like): Training data.
-        y_train (array-like): Target labels for training data.
-        random_state (int): Random seed for reproducibility (default=1).
-
-    Methods:
-        run_training: Train a specified Classifier.
-        _make_scoring: Creates a scorer based on the provided type.
-        _perform_randomized_search: Performs randomized search for hyperparameter tuning.
+        features_path (str): Path to the file containing features and target labels.
+        estimator: AdaBoostClassifier or BaggingClassifier.
+        random_state (int): Random seed for reproducibility (default=555).
     """
 
-    def __init__(self, X_train: np.array, y_train: np.array, random_state: int = 1):
-        self.X_train = X_train
-        self.y_train = y_train
+    def __init__(
+        self,
+        features_path: str,
+        estimator: Union[AdaBoostClassifier, BaggingClassifier],
+        random_state: int = 555,
+    ):
+        self.features_path = features_path
+        self.estimator = estimator
         self.random_state = random_state
 
-    def run_hyperparameter_opt(
-        self,
-        estimator: Union[AdaBoostClassifier, BaggingClassifier],
-        scorer: Literal["Recall"] = "Recall",
-        parameters: dict = {},
-        n_jobs: int = -1,
-        n_iter_search: int = 500,
-        apply_pca: Optional[bool] = None,
-    ) -> Any:
-        """
-        Train a specified classifier with or without PCA.
+        self.df = load_dataframe_from_path(self.features_path)
+        logger.info(f"ModelTrainer initialized with data from {features_path}.")
 
-        Parameters:
-            estimator: AdaBoostClassifier or BaggingClassifier.
-            scorer: The scorer type. Currently only supports 'Recall'.
-            parameters: Dictionary of parameters to be used for RandomizedSearchCV.
-            n_jobs: Number of jobs to run in parallel.
-            n_iter_search: Number of parameter settings that are sampled.
-            apply_pca: Whether to apply PCA before training the classifier.
+    # def run_hyperparameter_opt(
+    #     self,
+    #     scorer: Literal["Recall"] = "Recall",
+    #     parameters: dict = {},
+    #     n_jobs: int = -1,
+    #     n_iter_search: int = 500,
+    #     apply_pca: Optional[bool] = None,
+    # ) -> Any:
+    #     """
+    #     Train a specified classifier with or without PCA.
 
-        Returns:
-            tuned_estimator: The estimator trained with the best found parameters.
-        """
-        try:
-            logger.info(
-                f"Starting training for {type(estimator).__name__} with scorer {scorer}."
-            )
+    #     Parameters:
+    #         scorer: The scorer type. Currently only supports 'Recall'.
+    #         parameters: Dictionary of parameters to be used for RandomizedSearchCV.
+    #         n_jobs: Number of jobs to run in parallel.
+    #         n_iter_search: Number of parameter settings that are sampled.
+    #         apply_pca: Whether to apply PCA before training the classifier.
 
-            if apply_pca:
-                pca = decomposition.PCA()
-                pipe = Pipeline(
-                    steps=[("pca", pca), (str(type(estimator).__name__), estimator)]
-                )
-                logger.info("PCA is applied before training.")
-            else:
-                pipe = Pipeline(steps=[(str(type(estimator).__name__), estimator)])
+    #     Returns:
+    #         tuned_estimator: The estimator trained with the best found parameters.
+    #     """
 
-            grid_obj = self._perform_randomized_search(
-                pipe, parameters, scorer, n_jobs, n_iter_search
-            )
-            tuned_estimator = grid_obj.best_estimator_
-            tuned_estimator.fit(self.X_train, self.y_train)
+    #     if self.X_train is None or self.y_train is None:
+    #         raise ValueError(
+    #             "self.X_train and self.y_train are None. Please run split_data method first."
+    #         )
 
-            logger.info(f"Training successful for {type(estimator).__name__}.")
-            return tuned_estimator
+    #     try:
+    #         logger.info(
+    #             f"Starting training for {type(self.estimator).__name__} with scorer {scorer}."
+    #         )
 
-        except Exception as e:
-            logger.error(
-                f"Error occurred during training for {type(estimator).__name__}: {e}"
-            )
-            raise e
+    #         if apply_pca:
+    #             pca = decomposition.PCA()
+    #             pipe = Pipeline(
+    #                 steps=[
+    #                     ("pca", pca),
+    #                     (str(type(self.estimator).__name__), self.estimator),
+    #                 ]
+    #             )
+    #             logger.info("PCA is applied before training.")
+    #         else:
+    #             pipe = Pipeline(
+    #                 steps=[(str(type(self.estimator).__name__), self.estimator)]
+    #             )
 
+    #         grid_obj = self._perform_randomized_search(
+    #             pipe, parameters, scorer, n_jobs, n_iter_search
+    #         )
+    #         tuned_estimator = grid_obj.best_estimator_
+    #         tuned_estimator.fit(self.X_train, self.y_train)
+
+    #         logger.info(f"Training successful for {type(self.estimator).__name__}.")
+    #         return tuned_estimator
+
+    #     except Exception as e:
+    #         logger.error(
+    #             f"Error occurred during training for {type(self.estimator).__name__}: {e}"
+    #         )
+    #         raise e
+
+    @log_function_call("Training - Hyperparameter Opt")
     def _make_scoring(self, scorer_type: Literal["Recall"]) -> Any:
         """
         Create a scorer based on the provided type.
@@ -116,57 +131,181 @@ class ModelTrainer:
             )
             raise e
 
-    def _perform_randomized_search(
+    # @log_function_call("Training - Hyperparameter Opt")
+    # def _perform_randomized_search(
+    #     self,
+    #     estimator: Any,
+    #     parameters: dict,
+    #     scorer: Literal["Recall"],
+    #     n_jobs: int = -1,
+    #     n_iter_search: int = 500,
+    #     cv: int = 5,
+    # ) -> Any:
+    #     """
+    #     Perform randomized search for hyperparameter tuning.
+
+    #     Parameters:
+    #         estimator: Classifier to tune.
+    #         parameters: Hyperparameters and their possible values.
+    #         scorer: Scorer type to be used.
+    #         n_jobs: Number of jobs to run in parallel.
+    #         n_iter_search: Number of parameter settings that are sampled.
+    #         cv: Number of folds in cross-validation.
+
+    #     Returns:
+    #         grid_obj: Trained RandomizedSearchCV object.
+    #     """
+    #     try:
+    #         logger.info(f"Initiating Randomized Search for {estimator}.")
+    #         acc_scorer = self._make_scoring(scorer)
+    #         grid_obj = RandomizedSearchCV(
+    #             estimator,
+    #             n_iter=n_iter_search,
+    #             param_distributions=parameters,
+    #             scoring=acc_scorer,
+    #             cv=cv,
+    #             n_jobs=n_jobs,
+    #         )
+    #         grid_obj.fit(self.X_train, self.y_train)
+    #         logger.info(
+    #             f"Randomized Search successful for {estimator}. Best parameters: {grid_obj.best_params_}"
+    #         )
+    #         return grid_obj
+    #     except Exception as e:
+    #         logger.error(
+    #             f"Error occurred during Randomized Search for {estimator}: {e}"
+    #         )
+    #         raise e
+
+    @log_function_call("Training - Data Preparation")
+    def split_data(
         self,
-        estimator: Any,
-        parameters: dict,
-        scorer: Literal["Recall"],
-        n_jobs: int = -1,
-        n_iter_search: int = 500,
-        cv: int = 5,
-    ) -> Any:
+        target_column: Optional[str] = None,
+        df: Optional[Union[pd.DataFrame, str]] = None,
+        X: Optional[pd.DataFrame] = None,
+        y: Optional[pd.Series] = None,
+        test_size: float = 0.2,
+    ) -> tuple:
         """
-        Perform randomized search for hyperparameter tuning.
+        Split data into training and testing sets and separate target variable.
+
+        :param df: Input DataFrame. Default is None.
+        :param target_column: The name of the target variable column. Default is None.
+        :param X: Input features. Default is None.
+        :param y: Target variable. Default is None.
+        :param test_size: Proportion of the dataset included in the test split.
+        :return: Tuple of (X_train, X_test, y_train, y_test).
+        """
+        if X is not None and y is not None:
+            # If X and y are provided, directly split the data
+            pass
+
+        elif self.df is not None:
+            X = self.df.drop(target_column, axis=1)
+            y = self.df.pop(target_column)
+
+        elif df is not None:
+            if isinstance(df, str):
+                df = load_dataframe_from_path(df)
+            X = df.drop(target_column, axis=1)
+            y = df.pop(target_column)
+
+        else:
+            raise ValueError("Either provide df and target_column or X and y.")
+
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=test_size, random_state=self.random_state, stratify=y
+        )
+        return X_train, X_test, y_train, y_test
+
+    @log_function_call("Training - Upsampling")
+    def perform_upsampling(
+        self,
+        target_column: str,
+        data: Optional[Union[pd.DataFrame, str]] = None,
+        strategy: float = 1,
+        k_neighbors: int = 5,
+    ) -> Tuple[pd.DataFrame, pd.Series]:
+        """
+        Perform upsampling on the dataset to balance it.
 
         Parameters:
-            estimator: Classifier to tune.
-            parameters: Hyperparameters and their possible values.
-            scorer: Scorer type to be used.
-            n_jobs: Number of jobs to run in parallel.
-            n_iter_search: Number of parameter settings that are sampled.
-            cv: Number of folds in cross-validation.
+        data (Union[DataFrame, str]): The input data or the path to the CSV file.
+        target_column (str): Name of the target variable column.
+        strategy (float): The sampling strategy for SMOTE. Default is 1.
+        k_neighbors (int): Number of nearest neighbours used to construct synthetic samples. Default is 5.
 
         Returns:
-            grid_obj: Trained RandomizedSearchCV object.
+        X_train_res (DataFrame): The input features after resampling.
+        y_train_res (Series): The target variable after resampling.
         """
-        try:
-            logger.info(f"Initiating Randomized Search for {estimator}.")
-            acc_scorer = self._make_scoring(scorer)
-            grid_obj = RandomizedSearchCV(
-                estimator,
-                n_iter=n_iter_search,
-                param_distributions=parameters,
-                scoring=acc_scorer,
-                cv=cv,
-                n_jobs=n_jobs,
-            )
-            grid_obj.fit(self.X_train, self.y_train)
-            logger.info(
-                f"Randomized Search successful for {estimator}. Best parameters: {grid_obj.best_params_}"
-            )
-            return grid_obj
-        except Exception as e:
-            logger.error(
-                f"Error occurred during Randomized Search for {estimator}: {e}"
-            )
-            raise e
+        if self.df is not None:
+            data = self.df.copy()
+        elif data is not None:
+            if isinstance(data, str):
+                data = load_dataframe_from_path(data)
+
+        X_train = data.drop(target_column, axis=1)
+        y_train = data[target_column]
+
+        logger.info(f"Before Upsampling, counts of label '1': {sum(y_train==1)}")
+        logger.info(f"Before Upsampling, counts of label '0': {sum(y_train==0)}")
+
+        sm = SMOTE(
+            sampling_strategy=strategy,
+            k_neighbors=k_neighbors,
+            random_state=self.random_state,
+        )
+        X_train_res, y_train_res = sm.fit_resample(X_train, y_train.ravel())
+
+        logger.info(f"After Upsampling, counts of label '1': {sum(y_train_res==1)}")
+        logger.info(f"After Upsampling, counts of label '0': {sum(y_train_res==0)}")
+
+        return X_train_res, y_train_res
+
+    @log_function_call("Training - Downsampling")
+    def perform_downsampling(
+        self,
+        target_column: str,
+        data: Optional[Union[pd.DataFrame, str]] = None,
+    ) -> Tuple[pd.DataFrame, pd.Series]:
+        """
+        Perform downsampling on the dataset to balance it.
+
+        Parameters:
+        data (Union[DataFrame, str]): The input data or the path to the CSV file.
+        target_column (str): Name of the target variable column.
+
+        Returns:
+        X_train_res (DataFrame): The input features after resampling.
+        y_train_res (Series): The target variable after resampling.
+        """
+        if self.df is not None:
+            data = self.df.copy()
+        elif data is not None:
+            if isinstance(data, str):
+                data = load_dataframe_from_path(data)
+
+        X_train = data.drop(target_column, axis=1)
+        y_train = data[target_column]
+
+        logger.info(f"Before Downsampling, counts of label '1': {sum(y_train==1)}")
+        logger.info(f"Before Downsampling, counts of label '0': {sum(y_train==0)}")
+
+        rus = RandomUnderSampler()
+        X_train_res, y_train_res = rus.fit_resample(X_train, y_train)
+
+        logger.info(f"After Downsampling, counts of label '1': {sum(y_train_res==1)}")
+        logger.info(f"After Downsampling, counts of label '0': {sum(y_train_res==0)}")
+
+        return X_train_res, y_train_res
 
     def stack_and_fit_models(
         self,
         base_models: List[Tuple[str, ClassifierMixin]],
         meta_model: ClassifierMixin,
-        X_train: np.array,
-        y_train: np.array,
+        X_train: np.ndarray,
+        y_train: np.ndarray,
         refit_base_models: bool = False,
     ) -> StackingClassifier:
         """
@@ -175,8 +314,8 @@ class ModelTrainer:
         Parameters:
         base_models (List[Tuple[str, ClassifierMixin]]): List of (name, model) tuples.
         meta_model (ClassifierMixin): Meta-model for stacking.
-        X_train (np.array): Training data.
-        y_train (np.array): Training labels.
+        X_train (np.ndarray): Training data.
+        y_train (np.ndarray): Training labels.
         refit_base_models (bool): Flag indicating whether to refit base models.
 
         Returns:
@@ -207,24 +346,4 @@ class ModelTrainer:
 
         except Exception as e:
             logger.error(f"Error in stack_and_fit_models: {e}")
-            raise e
-
-    def save_model_to_pickle(estimator: Any, file_path: str) -> None:
-        """
-        Save a trained model to a specified file using Pickle.
-
-        Parameters:
-            estimator (Any): The trained model to save.
-            file_path (str): The path to the file where the model will be saved.
-        """
-        try:
-            logger.info(f"Saving model to {file_path}.")
-
-            with open(file_path, "wb") as file:
-                pickle.dump(estimator, file)
-
-            logger.info(f"Model saved successfully to {file_path}.")
-
-        except Exception as e:
-            logger.error(f"Error occurred while saving model to {file_path}: {e}")
             raise e

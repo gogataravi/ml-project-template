@@ -58,9 +58,17 @@ check_and_fix_test_quality: run_unit_tests
 INPUT_PATH= "/Users/salv91/Desktop/open-source/ml-project-template/utils/data/BankChurners.csv"
 OUTPUT_DIRECTORY= "/Users/salv91/Desktop/open-source/ml-project-template/notebooks/dev/test"
 
-test_fe:
+test_fe_passing_args:
 	@echo "Running ETL Test"
 	$(PYTHON_INTERPRETER) $(PWD)/pipelines/feature_engineering/components.py run-feature-engineering --input_path $(INPUT_PATH) --output_directory $(OUTPUT_DIRECTORY)
+
+test_fe_no_passing_args:
+	@echo "Running ETL Test"
+	$(PYTHON_INTERPRETER) $(PWD)/pipelines/feature_engineering/components.py run-feature-engineering
+
+test_training_data_prep_args:
+	@echo "Running ETL Test"
+	$(PYTHON_INTERPRETER) $(PWD)/pipelines/training/components.py run-training-data-prep --estimator "AdaBoostClassifier" --perform-sampling-techniques "upsampling"
 
 run_pylint:
 	@echo "Running linter"

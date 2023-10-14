@@ -1,15 +1,20 @@
+import os
+from datetime import datetime
+from typing import Optional, Tuple, Union
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
 from sklearn import metrics
 
-from utils.ml_logging import get_logger
+from utils.ml_logging import get_logger, log_function_call
 
 # Set up logging
 logger = get_logger()
 
 
+@log_function_call("Training - utils")
 def make_confusion_matrix(model, X_test, y_actual, labels=[1, 0]):
     """
     Generate confusion matrix for the fitted model.
@@ -94,3 +99,102 @@ def get_metrics_score(model, X_train, y_train, X_test, y_test, log_scores=True):
         logger.info(f"Precision on test set : {test_precision}")
 
     return score_list
+
+
+def load_datasets(
+    directory: str, date: Optional[str] = None
+) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """
+    Load X_train, X_test, y_train, and y_test from CSV files.
+
+    Parameters:
+    directory (str): Directory to load the CSV files from.
+    date (str, optional): Date string. Defaults to today's date in format 'day_month_year'.
+
+    Returns:
+    tuple: Tuple containing DataFrames (X_train, X_test, y_train, y_test).
+    """
+
+    # Set default date to today if not provided
+    if date is None:
+        date = datetime.today().strftime("%d_%m_%Y")
+
+    # Define file paths
+    x_train_path = os.path.join(directory, f"X_train_{date}.csv")
+    x_test_path = os.path.join(directory, f"X_test_{date}.csv")
+    y_train_path = os.path.join(directory, f"y_train_{date}.csv")
+    y_test_path = os.path.join(directory, f"y_test_{date}.csv")
+
+    # Check if files exist
+    if not all(
+        os.path.exists(path)
+        for path in [x_train_path, x_test_path, y_train_path, y_test_path]
+    ):
+        logger.error(
+            f"One or more files not found in directory: {directory} for date: {date}"
+        )
+        raise FileNotFoundError("One or more dataset files not found.")
+
+    # Load datasets
+    X_train = pd.read_csv(x_train_path)
+    X_test = pd.read_csv(x_test_path)
+    y_train = pd.read_csv(y_train_path)
+    y_test = pd.read_csv(y_test_path)
+
+    logger.info(f"Datasets loaded from directory: {directory} for date: {date}")
+
+    return X_train, X_test, y_train, y_test
+
+
+@log_function_call("Training - utils")
+def save_datasets(
+    X_train: Union[pd.DataFrame, pd.Series],
+    X_test: Union[pd.DataFrame, pd.Series],
+    y_train: Union[pd.DataFrame, pd.Series],
+    y_test: Union[pd.DataFrame, pd.Series],
+    directory: str,
+    date: Optional[str] = None,
+) -> None:
+    """
+    Save X_train, X_test, y_train, and y_test as CSV files.
+
+    Parameters:
+    X_train (DataFrame/Series): Training data features.
+    X_test (DataFrame/Series): Test data features.
+    y_train (DataFrame/Series): Training data target.
+    y_test (DataFrame/Series): Test data target.
+    directory (str): Directory to save the CSV files.
+    date (str, optional): Date string. Defaults to today's date in format 'day_month_year'.
+    """
+
+    # Set default date to today if not provided
+    if date is None:
+        date = datetime.today().strftime("%d_%m_%Y")
+
+    # Create directory if it does not exist
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+        logger.info(f"Created directory: {directory}")
+
+    # Convert data to DataFrame if they are Series
+    if isinstance(X_train, (pd.Series, np.ndarray)):
+        X_train = pd.DataFrame(X_train)
+    if isinstance(X_test, (pd.Series, np.ndarray)):
+        X_test = pd.DataFrame(X_test)
+    if isinstance(y_train, (pd.Series, np.ndarray)):
+        y_train = pd.DataFrame(y_train)
+    if isinstance(y_test, (pd.Series, np.ndarray)):
+        y_test = pd.DataFrame(y_test)
+
+    # Save datasets as CSV files
+    X_train.to_csv(os.path.join(directory, f"X_train_{date}.csv"), index=False)
+    logger.info(f"X_train saved at {os.path.join(directory, f'X_train_{date}.csv')}")
+
+    X_test.to_csv(os.path.join(directory, f"X_test_{date}.csv"), index=False)
+    logger.info(f"X_test saved at {os.path.join(directory, f'X_test_{date}.csv')}")
+
+    y_train.to_csv(os.path.join(directory, f"y_train_{date}.csv"), index=False)
+    logger.info(f"y_train saved at {os.path.join(directory, f'y_train_{date}.csv')}")
+
+    y_test.to_csv(os.path.join(directory, f"y_test_{date}.csv"), index=False)
+    logger.info(f"y_test saved at {os.path.join(directory, f'y_test_{date}.csv')}")
