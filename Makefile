@@ -60,8 +60,7 @@ OUTPUT_DIRECTORY= "/Users/salv91/Desktop/open-source/ml-project-template/noteboo
 
 test_fe:
 	@echo "Running ETL Test"
-	$(PYTHON_INTERPRETER) $(PWD)/pipelines/feature_engineering/components.py run-feature-engineering -i $(INPUT_PATH) -o $(OUTPUT_DIRECTORY)
-
+	$(PYTHON_INTERPRETER) $(PWD)/pipelines/feature_engineering/components.py run-feature-engineering --input_path $(INPUT_PATH) --output_directory $(OUTPUT_DIRECTORY)
 
 run_pylint:
 	@echo "Running linter"

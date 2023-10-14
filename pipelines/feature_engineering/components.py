@@ -1,6 +1,8 @@
+import os
 from typing import Optional
 
 import click
+from omegaconf import DictConfig, OmegaConf
 
 from src.feature_engineering.etl import load_data
 from src.feature_engineering.model_specific_transformations import (
@@ -17,37 +19,63 @@ from utils.ml_logging import get_logger
 logger = get_logger()
 
 
+class Context:
+    def __init__(self, cfg: DictConfig):
+        self.cfg = cfg
+
+
 @click.group()
-def cli() -> None:
+@click.pass_context
+def cli(ctx) -> None:
     """Execute before every command."""
     logger.info("Executing the pipeline component...")
 
 
 @cli.command()
+@click.pass_context
 @click.option(
-    "-i", "--input_path", type=str, required=True, help="Path to the data file"
+    "-p", "--input_path", type=str, default=None, help="Path to the data file"
 )
 @click.option(
     "-o",
     "--output_directory",
     type=str,
-    required=True,
+    default=None,
     help="Directory to save datasets",
 )
-@click.option(
-    "-dt",
-    "--date",
-    type=str,
-    required=False,
-    help="Date to save datasets",
-    default=None,
-)
+@click.option("-dt", "--date", type=str, default=None, help="Date to save datasets")
 def run_feature_engineering(
-    input_path: str, output_directory: str, date: Optional[str] = None
+    ctx: click.Context,
+    input_path: Optional[str],
+    output_directory: Optional[str],
+    date: Optional[str],
 ) -> None:
     """
     Run feature engineering process, save resulting datasets to specified directory.
     """
+    cfg = ctx.obj.cfg
+
+    # Validate and/or set default values from the configuration
+    input_path = input_path or cfg.pipeline_settings.input_path
+    if not input_path:
+        logger.error(
+            "Input path is neither provided as an argument nor found in the configuration."
+        )
+        return
+
+    output_directory = output_directory or cfg.pipeline_settings.output_directory
+    if not output_directory:
+        logger.error(
+            "Output directory is neither provided as an argument nor found in the configuration."
+        )
+        return
+
+    date = date or cfg.pipeline_settings.date
+    if not date:
+        logger.warning(
+            "Date is neither provided as an argument nor found in the configuration. Defaulting to 'None'."
+        )
+
     logger.info(f"Running feature engineering with data from {input_path}")
 
     # Load and preprocess data
@@ -97,5 +125,17 @@ def run_feature_engineering(
     save_datasets(X_train, X_test, y_train, y_test, output_directory, date)
 
 
+@click.option("--config", type=str, default=None, help="Path to the configuration file")
+def main(config: Optional[str] = None) -> None:
+    """Entry point of the script."""
+    if not config:
+        config = "pipelines/configs/feature_engineering/fe.yaml"
+    if not os.path.exists(config):
+        raise ValueError(f"Configuration file not found at {config}")
+
+    cfg = OmegaConf.load(config)
+    cli(obj=Context(cfg))
+
+
 if __name__ == "__main__":
-    cli()
+    main()

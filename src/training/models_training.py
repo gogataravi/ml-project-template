@@ -29,12 +29,12 @@ class ModelTrainer:
         _perform_randomized_search: Performs randomized search for hyperparameter tuning.
     """
 
-    def __init__(self, X_train: np.ndarray, y_train: np.ndarray, random_state: int = 1):
+    def __init__(self, X_train: np.array, y_train: np.array, random_state: int = 1):
         self.X_train = X_train
         self.y_train = y_train
         self.random_state = random_state
 
-    def run(
+    def run_hyperparameter_opt(
         self,
         estimator: Union[AdaBoostClassifier, BaggingClassifier],
         scorer: Literal["Recall"] = "Recall",
@@ -165,8 +165,8 @@ class ModelTrainer:
         self,
         base_models: List[Tuple[str, ClassifierMixin]],
         meta_model: ClassifierMixin,
-        X_train: np.ndarray,
-        y_train: np.ndarray,
+        X_train: np.array,
+        y_train: np.array,
         refit_base_models: bool = False,
     ) -> StackingClassifier:
         """
@@ -175,8 +175,8 @@ class ModelTrainer:
         Parameters:
         base_models (List[Tuple[str, ClassifierMixin]]): List of (name, model) tuples.
         meta_model (ClassifierMixin): Meta-model for stacking.
-        X_train (np.ndarray): Training data.
-        y_train (np.ndarray): Training labels.
+        X_train (np.array): Training data.
+        y_train (np.array): Training labels.
         refit_base_models (bool): Flag indicating whether to refit base models.
 
         Returns:
@@ -207,10 +207,7 @@ class ModelTrainer:
 
         except Exception as e:
             logger.error(f"Error in stack_and_fit_models: {e}")
-            # You might also want to re-raise the exception after logging it
             raise e
-
-    import pickle
 
     def save_model_to_pickle(estimator: Any, file_path: str) -> None:
         """
@@ -223,7 +220,6 @@ class ModelTrainer:
         try:
             logger.info(f"Saving model to {file_path}.")
 
-            # Open the file in write-binary mode and save the model
             with open(file_path, "wb") as file:
                 pickle.dump(estimator, file)
 
