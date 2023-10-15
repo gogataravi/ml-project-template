@@ -4,11 +4,13 @@ import numpy as np
 import pandas as pd
 from imblearn.over_sampling import SMOTE
 from imblearn.under_sampling import RandomUnderSampler
-from sklearn import metrics
+from sklearn import decomposition, metrics
 from sklearn.base import ClassifierMixin
-from sklearn.ensemble import AdaBoostClassifier, BaggingClassifier, StackingClassifier
-from sklearn.model_selection import train_test_split
+from sklearn.ensemble import AdaBoostClassifier, StackingClassifier
+from sklearn.model_selection import RandomizedSearchCV, train_test_split
+from sklearn.pipeline import Pipeline
 
+from src.training.utils import get_metrics_score, make_confusion_matrix
 from src.utils import load_dataframe_from_path
 from utils.ml_logging import get_logger, log_function_call
 
@@ -21,84 +23,122 @@ class ModelTrainer:
     Class for training ensemble classifiers using randomized search.
 
     Parameters:
-        features_path (str): Path to the file containing features and target labels.
+        features_path (Optional[str]): Path to the file containing features and target labels.
+                                      If None, X_train and y_train must be provided.
         estimator: AdaBoostClassifier or BaggingClassifier.
         random_state (int): Random seed for reproducibility (default=555).
+        X_train (Optional[pd.DataFrame]): Training data features.
+        y_train (Optional[pd.Series]): Training data target variable.
+        X_test (Optional[pd.DataFrame]): Testing data features.
+        y_test (Optional[pd.Series]): Testing data target variable.
     """
+
+    ESTIMATOR_MAPPING = {
+        "AdaBoostClassifier": AdaBoostClassifier,
+        # 'AnotherClassifier': AnotherClassifierClass,  # Add more classifiers here as needed.
+    }
 
     def __init__(
         self,
-        features_path: str,
-        estimator: Union[AdaBoostClassifier, BaggingClassifier],
+        estimator: str,
+        features_path: Optional[str] = None,
         random_state: int = 555,
+        X_train: Optional[pd.DataFrame] = None,
+        y_train: Optional[pd.Series] = None,
+        X_test: Optional[pd.DataFrame] = None,
+        y_test: Optional[pd.Series] = None,
     ):
         self.features_path = features_path
-        self.estimator = estimator
         self.random_state = random_state
+        if estimator in self.ESTIMATOR_MAPPING:
+            self.estimator = self.ESTIMATOR_MAPPING[estimator](
+                random_state=random_state
+            )
+        else:
+            raise ValueError(f"Unsupported estimator type: {estimator}")
+        self.X_train = X_train
+        self.y_train = y_train
+        self.X_test = X_test
+        self.y_test = y_test
 
-        self.df = load_dataframe_from_path(self.features_path)
-        logger.info(f"ModelTrainer initialized with data from {features_path}.")
+        if self.features_path:
+            self.df = load_dataframe_from_path(self.features_path)
+            logger.info(
+                f"ModelTrainer initialized with data from {self.features_path}."
+            )
+        elif (self.X_train is not None and self.y_train is not None) or (
+            self.X_test is not None and self.y_test is not None
+        ):
+            logger.info("ModelTrainer initialized with provided data.")
+        else:
+            raise ValueError(
+                "Either features_path or training and testing data must be provided."
+            )
 
-    # def run_hyperparameter_opt(
-    #     self,
-    #     scorer: Literal["Recall"] = "Recall",
-    #     parameters: dict = {},
-    #     n_jobs: int = -1,
-    #     n_iter_search: int = 500,
-    #     apply_pca: Optional[bool] = None,
-    # ) -> Any:
-    #     """
-    #     Train a specified classifier with or without PCA.
+    def run_hyperparameter_opt(
+        self,
+        scorer: Literal["Recall"] = "Recall",
+        parameters: dict = {},
+        n_jobs: int = -1,
+        n_iter_search: int = 500,
+        apply_pca: Optional[bool] = None,
+    ) -> Any:
+        """
+        Train a specified classifier with or without PCA.
 
-    #     Parameters:
-    #         scorer: The scorer type. Currently only supports 'Recall'.
-    #         parameters: Dictionary of parameters to be used for RandomizedSearchCV.
-    #         n_jobs: Number of jobs to run in parallel.
-    #         n_iter_search: Number of parameter settings that are sampled.
-    #         apply_pca: Whether to apply PCA before training the classifier.
+        :param scorer: The scorer type. Currently only supports 'Recall'.
+        :param parameters: Dictionary of parameters to be used for RandomizedSearchCV.
+        :param n_jobs: Number of jobs to run in parallel.
+        :param n_iter_search: Number of parameter settings that are sampled.
+        :param apply_pca: Whether to apply PCA before training the classifier.
+        :return: The estimator trained with the best found parameters.
+        """
 
-    #     Returns:
-    #         tuned_estimator: The estimator trained with the best found parameters.
-    #     """
+        if self.X_train is None or self.y_train is None:
+            raise ValueError(
+                "X_train and y_train cannot be None. Please provide valid training data."
+            )
 
-    #     if self.X_train is None or self.y_train is None:
-    #         raise ValueError(
-    #             "self.X_train and self.y_train are None. Please run split_data method first."
-    #         )
+        try:
+            logger.info(
+                f"Starting training for {type(self.estimator).__name__} with scorer {scorer}."
+            )
 
-    #     try:
-    #         logger.info(
-    #             f"Starting training for {type(self.estimator).__name__} with scorer {scorer}."
-    #         )
+            if apply_pca:
+                pca = decomposition.PCA()
+                pipe = Pipeline(
+                    steps=[
+                        ("pca", pca),
+                        (str(type(self.estimator).__name__), self.estimator),
+                    ]
+                )
+                logger.info("PCA is applied before training.")
+            else:
+                pipe = Pipeline(
+                    steps=[(str(type(self.estimator).__name__), self.estimator)]
+                )
 
-    #         if apply_pca:
-    #             pca = decomposition.PCA()
-    #             pipe = Pipeline(
-    #                 steps=[
-    #                     ("pca", pca),
-    #                     (str(type(self.estimator).__name__), self.estimator),
-    #                 ]
-    #             )
-    #             logger.info("PCA is applied before training.")
-    #         else:
-    #             pipe = Pipeline(
-    #                 steps=[(str(type(self.estimator).__name__), self.estimator)]
-    #             )
+            grid_obj = self._perform_randomized_search(
+                pipe, parameters, scorer, n_jobs, n_iter_search
+            )
+            tuned_estimator = grid_obj.best_estimator_
+            tuned_estimator.fit(self.X_train, self.y_train)
 
-    #         grid_obj = self._perform_randomized_search(
-    #             pipe, parameters, scorer, n_jobs, n_iter_search
-    #         )
-    #         tuned_estimator = grid_obj.best_estimator_
-    #         tuned_estimator.fit(self.X_train, self.y_train)
+            get_metrics_score(
+                tuned_estimator, self.X_train, self.y_train, self.X_test, self.y_test
+            )
 
-    #         logger.info(f"Training successful for {type(self.estimator).__name__}.")
-    #         return tuned_estimator
+            make_confusion_matrix(tuned_estimator, self.X_test, self.y_test)
 
-    #     except Exception as e:
-    #         logger.error(
-    #             f"Error occurred during training for {type(self.estimator).__name__}: {e}"
-    #         )
-    #         raise e
+            logger.info(f"Training successful for {type(self.estimator).__name__}.")
+
+            return tuned_estimator
+
+        except Exception as e:
+            logger.error(
+                f"Error occurred during training for {type(self.estimator).__name__}: {e}"
+            )
+            raise e
 
     @log_function_call("Training - Hyperparameter Opt")
     def _make_scoring(self, scorer_type: Literal["Recall"]) -> Any:
@@ -131,51 +171,51 @@ class ModelTrainer:
             )
             raise e
 
-    # @log_function_call("Training - Hyperparameter Opt")
-    # def _perform_randomized_search(
-    #     self,
-    #     estimator: Any,
-    #     parameters: dict,
-    #     scorer: Literal["Recall"],
-    #     n_jobs: int = -1,
-    #     n_iter_search: int = 500,
-    #     cv: int = 5,
-    # ) -> Any:
-    #     """
-    #     Perform randomized search for hyperparameter tuning.
+    @log_function_call("Training - Hyperparameter Opt")
+    def _perform_randomized_search(
+        self,
+        estimator: Any,
+        parameters: dict,
+        scorer: Literal["Recall"],
+        n_jobs: int = -1,
+        n_iter_search: int = 500,
+        cv: int = 5,
+    ) -> Any:
+        """
+        Perform randomized search for hyperparameter tuning.
 
-    #     Parameters:
-    #         estimator: Classifier to tune.
-    #         parameters: Hyperparameters and their possible values.
-    #         scorer: Scorer type to be used.
-    #         n_jobs: Number of jobs to run in parallel.
-    #         n_iter_search: Number of parameter settings that are sampled.
-    #         cv: Number of folds in cross-validation.
+        Parameters:
+            estimator: Classifier to tune.
+            parameters: Hyperparameters and their possible values.
+            scorer: Scorer type to be used.
+            n_jobs: Number of jobs to run in parallel.
+            n_iter_search: Number of parameter settings that are sampled.
+            cv: Number of folds in cross-validation.
 
-    #     Returns:
-    #         grid_obj: Trained RandomizedSearchCV object.
-    #     """
-    #     try:
-    #         logger.info(f"Initiating Randomized Search for {estimator}.")
-    #         acc_scorer = self._make_scoring(scorer)
-    #         grid_obj = RandomizedSearchCV(
-    #             estimator,
-    #             n_iter=n_iter_search,
-    #             param_distributions=parameters,
-    #             scoring=acc_scorer,
-    #             cv=cv,
-    #             n_jobs=n_jobs,
-    #         )
-    #         grid_obj.fit(self.X_train, self.y_train)
-    #         logger.info(
-    #             f"Randomized Search successful for {estimator}. Best parameters: {grid_obj.best_params_}"
-    #         )
-    #         return grid_obj
-    #     except Exception as e:
-    #         logger.error(
-    #             f"Error occurred during Randomized Search for {estimator}: {e}"
-    #         )
-    #         raise e
+        Returns:
+            grid_obj: Trained RandomizedSearchCV object.
+        """
+        try:
+            logger.info(f"Initiating Randomized Search for {estimator}.")
+            acc_scorer = self._make_scoring(scorer)
+            grid_obj = RandomizedSearchCV(
+                estimator,
+                n_iter=n_iter_search,
+                param_distributions=parameters,
+                scoring=acc_scorer,
+                cv=cv,
+                n_jobs=n_jobs,
+            )
+            grid_obj.fit(self.X_train, self.y_train)
+            logger.info(
+                f"Randomized Search successful for {estimator}. Best parameters: {grid_obj.best_params_}"
+            )
+            return grid_obj
+        except Exception as e:
+            logger.error(
+                f"Error occurred during Randomized Search for {estimator}: {e}"
+            )
+            raise e
 
     @log_function_call("Training - Data Preparation")
     def split_data(

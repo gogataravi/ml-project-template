@@ -8,6 +8,8 @@ fe_pipeline_settings:
 training_pipeline_settings:
   features_path: "/Users/salv91/Desktop/open-source/ml-project-template/pipelines/registries/feature_store/${pipeline_settings.date}/feature_dataset.csv"
   output_directory: "/Users/salv91/Desktop/open-source/ml-project-template/pipelines/registries/feature_store/${pipeline_settings.date}/training/"
+  features_split_directory: "/Users/salv91/Desktop/open-source/ml-project-template/pipelines/registries/feature_store/${pipeline_settings.date}/training/"
+  output_models_directory: "/Users/salv91/Desktop/open-source/ml-project-template/pipelines/registries/model_registry/${pipeline_settings.date}/training/"
   target_column: "Attrition_Flag"
 
   hyper_parameter_optimization: ${hyper_parameter_file}

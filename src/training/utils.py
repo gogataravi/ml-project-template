@@ -14,7 +14,7 @@ from utils.ml_logging import get_logger, log_function_call
 logger = get_logger()
 
 
-@log_function_call("Training - utils")
+@log_function_call("Training - evaluation")
 def make_confusion_matrix(model, X_test, y_actual, labels=[1, 0]):
     """
     Generate confusion matrix for the fitted model.
@@ -45,6 +45,7 @@ def make_confusion_matrix(model, X_test, y_actual, labels=[1, 0]):
     plt.xlabel("Predicted label")
 
 
+@log_function_call("Training - evaluation")
 def get_metrics_score(model, X_train, y_train, X_test, y_test, log_scores=True):
     """
     Calculate different metric scores of the model - Accuracy, Recall, and Precision.

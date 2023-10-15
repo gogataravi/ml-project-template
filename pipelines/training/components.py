@@ -1,10 +1,14 @@
 from typing import Literal, Optional
 
 import click
+import numpy as np
 from omegaconf import DictConfig, OmegaConf
+from scipy.stats import randint
+from sklearn.tree import DecisionTreeClassifier
 
 from src.training.models_training import ModelTrainer
-from src.training.utils import save_datasets
+from src.training.utils import load_datasets, save_datasets
+from src.utils import save_model_to_pickle
 from utils.ml_logging import get_logger
 
 # Set up logging
@@ -33,7 +37,7 @@ def cli(ctx) -> None:
 )
 @click.option(
     "--estimator",
-    type=click.Choice(["AdaBoostClassifier", "BaggingClassifier"]),
+    type=str,
     required=True,
     help="Classifier to use.",
 )
@@ -60,7 +64,7 @@ def cli(ctx) -> None:
 )
 def run_training_data_prep(
     ctx: click.Context,
-    estimator: Literal["AdaBoostClassifier", "BaggingClassifier"],
+    estimator: str,
     features_path: Optional[str],
     target_column: Optional[str],
     train_scoring_split: Optional[float] = 0.2,
@@ -118,16 +122,19 @@ def run_training_data_prep(
         )
 
     logger.info(f"Running feature engineering with data from {features_path}")
-    modeltrainer_instance = ModelTrainer(
-        features_path, estimator=estimator, random_state=random_state
+    formatted_estimator = estimator.replace(
+        " ", "_"
+    )  # Example formatting, adjust as needed
+    model_type = cfg.training_pipeline_settings.hyper_parameter_optimization.models.get(
+        formatted_estimator, {}
+    ).get("model_type", None)
+
+    modeltrainer_instance = ModelTrainer(  # type: ignore
+        features_path, estimator=model_type, random_state=random_state
     )
 
     if perform_sampling_techniques:
         if perform_sampling_techniques == "upsampling":
-            formatted_estimator = estimator.replace(
-                " ", "_"
-            )  # Example formatting, adjust as needed
-
             strategy = (
                 cfg.training_pipeline_settings.hyper_parameter_optimization.models.get(
                     formatted_estimator, {}
@@ -166,6 +173,146 @@ def run_training_data_prep(
         )
 
     save_datasets(X_train, X_test, y_train, y_test, output_directory, date)
+
+
+@cli.command()
+@click.pass_context
+@click.option(
+    "--features_directory", type=str, help="Path to the features dataset.", default=None
+)
+@click.option(
+    "--estimator",
+    type=str,
+    required=True,
+    help="Classifier to use.",
+)
+@click.option(
+    "--random-state", type=int, default=555, help="Random state for reproducibility."
+)
+@click.option(
+    "--output_models_directory",
+    type=str,
+    default=None,
+    help="Directory to save the resultant datasets.",
+)
+@click.option(
+    "--date", type=str, default=None, help="Date associated with the operation."
+)
+def run_training(
+    ctx: click.Context,
+    estimator: Optional[str] = None,
+    features_directory: Optional[str] = None,
+    output_models_directory: Optional[str] = None,
+    random_state: int = 555,
+    date: Optional[str] = None,
+) -> None:
+    """
+    Prepare training data by performing feature engineering, sampling techniques if specified,
+    and saving the resultant datasets to the designated output directory.
+    """
+
+    cfg = ctx.obj.cfg
+
+    formatted_estimator = estimator.replace(" ", "_")  # type: ignore
+
+    # Fetch the model type
+    model_type = cfg.training_pipeline_settings.hyper_parameter_optimization.models.get(
+        formatted_estimator, {}
+    ).get("model_type", None)
+
+    # If the model_type doesn't exist, raise an error or handle accordingly
+    if not model_type:
+        logger.error(f"Model type not found for estimator: {formatted_estimator}")
+        return
+
+    # Fetch the hyperparameter optimization configurations
+    estimator_parameters_opt = (
+        cfg.training_pipeline_settings.hyper_parameter_optimization.models.get(
+            formatted_estimator, {}
+        ).get("estimator_parameters_opt", {})
+    )
+
+    scorer = estimator_parameters_opt.get("scorer", None)
+    n_jobs = estimator_parameters_opt.get("n_jobs", None)
+    n_iter_search = estimator_parameters_opt.get("n_iter_search", None)
+    apply_pca = estimator_parameters_opt.get("apply_pca", None)
+
+    # Validate and set defaults using configuration if arguments are not provided
+    features_directory = (
+        features_directory or cfg.training_pipeline_settings.features_split_directory
+    )
+    if not features_directory:
+        logger.error("Features path is not provided or found in the configuration.")
+        return
+
+    output_models_directory = (
+        output_models_directory
+        or cfg.training_pipeline_settings.output_models_directory
+    )
+    if not output_models_directory:
+        logger.error("Output directory is not provided or found in the configuration.")
+        return
+
+    date = date or cfg.pipeline_settings.date
+    if not date:
+        logger.warning(
+            "Date is not provided or found in the configuration. Defaulting to 'None'."
+        )
+
+    logger.info(f"Running feature engineering with data from {features_directory}")
+
+    X_train, X_test, y_train, y_test = load_datasets(
+        directory=features_directory, date=date
+    )
+
+    modeltrainer_instance = ModelTrainer(
+        X_train=X_train,
+        y_train=y_train,
+        X_test=X_test,
+        y_test=y_test,
+        estimator=model_type,
+        random_state=random_state,
+    )
+
+    parameters = {
+        "AdaBoostClassifier__base_estimator": [
+            DecisionTreeClassifier(
+                max_depth=3,
+                max_leaf_nodes=9,
+                min_impurity_decrease=0.001,
+                min_samples_leaf=8,
+                random_state=1,
+            ),
+            DecisionTreeClassifier(
+                max_depth=5,
+                max_leaf_nodes=9,
+                min_impurity_decrease=0.001,
+                min_samples_leaf=10,
+                random_state=1,
+            ),
+            DecisionTreeClassifier(
+                max_depth=8,
+                max_leaf_nodes=9,
+                min_impurity_decrease=0.001,
+                min_samples_leaf=8,
+                random_state=1,
+            ),
+        ],
+        "AdaBoostClassifier__n_estimators": randint(10, 110),
+        "AdaBoostClassifier__learning_rate": np.arange(0.01, 0.10, 0.05),
+    }
+
+    tuned_estimator = modeltrainer_instance.run_hyperparameter_opt(
+        scorer=scorer,
+        n_jobs=n_jobs,
+        n_iter_search=n_iter_search,
+        apply_pca=apply_pca,
+        parameters=parameters,
+    )
+
+    output_models_directory = output_models_directory + f"{estimator}" + ".pickle"
+
+    save_model_to_pickle(tuned_estimator, output_models_directory)
 
 
 @click.option(

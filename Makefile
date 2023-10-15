@@ -70,6 +70,10 @@ test_training_data_prep_args:
 	@echo "Running ETL Test"
 	$(PYTHON_INTERPRETER) $(PWD)/pipelines/training/components.py run-training-data-prep --estimator "AdaBoostClassifier" --perform-sampling-techniques "upsampling"
 
+test_training:
+	@echo "Running ETL Test"
+	$(PYTHON_INTERPRETER) $(PWD)/pipelines/training/components.py run-training --estimator "AdaBoost_upsampling"
+
 run_pylint:
 	@echo "Running linter"
 	find . -type f -name "*.py" ! -path "./tests/*" | xargs pylint -disable=logging-fstring-interpolation > utils/pylint_report/pylint_report.txt

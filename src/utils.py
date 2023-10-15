@@ -54,6 +54,11 @@ def save_model_to_pickle(estimator: Any, file_path: str) -> None:  # nosec
     :raises Exception: If an error occurs while saving the model.
     """
     try:
+        # Ensure the directory exists; if not, create it.
+        directory = os.path.dirname(file_path)
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
         logger.info(f"Saving model to {file_path}.")
         with open(file_path, "wb") as file:
             pickle.dump(estimator, file)  # nosec
