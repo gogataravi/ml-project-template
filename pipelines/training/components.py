@@ -1,11 +1,9 @@
 from typing import Literal, Optional
 
 import click
-import numpy as np
 from omegaconf import DictConfig, OmegaConf
-from scipy.stats import randint
-from sklearn.tree import DecisionTreeClassifier
 
+from pipelines.configs.churn_prediction import utils
 from src.training.models_training import ModelTrainer
 from src.training.utils import load_datasets, save_datasets
 from src.utils import save_model_to_pickle
@@ -198,7 +196,7 @@ def run_training_data_prep(
 @click.option(
     "--date", type=str, default=None, help="Date associated with the operation."
 )
-def run_training(
+def run_hyper_parameter_opt(
     ctx: click.Context,
     estimator: Optional[str] = None,
     features_directory: Optional[str] = None,
@@ -274,40 +272,12 @@ def run_training(
         random_state=random_state,
     )
 
-    parameters = {
-        "AdaBoostClassifier__base_estimator": [
-            DecisionTreeClassifier(
-                max_depth=3,
-                max_leaf_nodes=9,
-                min_impurity_decrease=0.001,
-                min_samples_leaf=8,
-                random_state=1,
-            ),
-            DecisionTreeClassifier(
-                max_depth=5,
-                max_leaf_nodes=9,
-                min_impurity_decrease=0.001,
-                min_samples_leaf=10,
-                random_state=1,
-            ),
-            DecisionTreeClassifier(
-                max_depth=8,
-                max_leaf_nodes=9,
-                min_impurity_decrease=0.001,
-                min_samples_leaf=8,
-                random_state=1,
-            ),
-        ],
-        "AdaBoostClassifier__n_estimators": randint(10, 110),
-        "AdaBoostClassifier__learning_rate": np.arange(0.01, 0.10, 0.05),
-    }
-
     tuned_estimator = modeltrainer_instance.run_hyperparameter_opt(
         scorer=scorer,
         n_jobs=n_jobs,
         n_iter_search=n_iter_search,
         apply_pca=apply_pca,
-        parameters=parameters,
+        parameters=utils.parameters_train_ada_boost_upsampling,
     )
 
     output_models_directory = output_models_directory + f"{estimator}" + ".pickle"

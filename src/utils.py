@@ -116,3 +116,9 @@ def load_dataframe_from_path(path: str) -> pd.DataFrame:
     except Exception as e:
         logger.error(f"Error occurred while loading DataFrame from {path}: {e}")
         raise e
+
+
+def resolve_python_object(path_str):
+    module_str, obj_str = path_str.rsplit(".", 1)
+    module = __import__(module_str, fromlist=[obj_str])
+    return getattr(module, obj_str)

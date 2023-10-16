@@ -124,6 +124,9 @@ class ModelTrainer:
             tuned_estimator = grid_obj.best_estimator_
             tuned_estimator.fit(self.X_train, self.y_train)
 
+            # Log the best parameters
+            logger.info(f"Best parameters after search: {grid_obj.best_params_}")
+
             get_metrics_score(
                 tuned_estimator, self.X_train, self.y_train, self.X_test, self.y_test
             )
